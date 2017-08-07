@@ -1,21 +1,22 @@
 <?php
 header('content-type:text/html;charset=utf-8');
  
-define("TOKEN", "weixin");
-define("appID", "xxxxxxxxxxxxx");
-define("appSecret", "xxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+define("TOKEN", "weixin"); //define your token
+define("appID", "wx79e2cdc216e9280d");
+define("appSecret", "f863f8fffa9f8c8e19d47c2b1e9b2905");
 $wx = new wechatCallbackapiTest();
 
 if($_GET['echostr']){
-	$wx->valid();
+	$wx->valid(); //如果发来了echostr则进行验证
 }else{
-	$wx->responseMsg();
+	//$wx->upLoadImage();
+	$wx->responseMsg(); //如果没有echostr，则返回消息
 }
 
 
 class wechatCallbackapiTest{
 
-	public function valid(){
+	public function valid(){ //valid signature , option
 
 		$echoStr = $_GET["echostr"];
 		if($this->checkSignature()){ //调用验证字段
@@ -26,17 +27,19 @@ class wechatCallbackapiTest{
  
 	public function responseMsg(){
 	 
+		//get post data, May be due to the different environments
 		$postStr = $GLOBALS["HTTP_RAW_POST_DATA"]; //接收微信发来的XML数据
 	
+		//extract post data
 		if(!empty($postStr)){
 			//解析post来的XML为一个对象$postObj
 			$postObj = simplexml_load_string($postStr, 'SimpleXMLElement', LIBXML_NOCDATA);
 			
-			$fromUsername = $postObj->FromUserName;
-			$toUsername = $postObj->ToUserName;
-			$keyword = trim($postObj->Content); 
-			$time = time(); 
-			$msgtype = 'text';
+			$fromUsername = $postObj->FromUserName; //请求消息的用户
+			$toUsername = $postObj->ToUserName; //"我"的公众号id
+			$keyword = trim($postObj->Content); //消息内容
+			$time = time(); //时间戳
+			$msgtype = 'text'; //消息类型：文本
 			$textTpl = "<xml>
 						<ToUserName><![CDATA[%s]]></ToUserName>
 						<FromUserName><![CDATA[%s]]></FromUserName>
@@ -45,12 +48,14 @@ class wechatCallbackapiTest{
 						<Content><![CDATA[%s]]></Content>
 						</xml>";
 		
-			if($keyword == 'hello'){
+			if($keyword == 'hehe'){
 				$contentStr = 'hello world!!!';
 				$resultStr = sprintf($textTpl, $fromUsername, $toUsername, $time, $msgtype, $contentStr);
 				echo $resultStr;
 				exit();            
-			}elseif($keyword == 'pic'){
+			}elseif($keyword == '防撤回'){
+				pclose(popen('../wechat/go.sh &', 'r'));
+				sleep(1);
 				$imgtype = 'image';
 				$image_id = $this->upLoadImage();
 				$textImg = "<xml>
@@ -66,7 +71,7 @@ class wechatCallbackapiTest{
 				echo $resultStr;
 				exit();
 			}else{
-				$contentStr = '我不是 AI 啊';
+				$contentStr = "我不是AI啊\n（逃";
 				$resultStr = sprintf($textTpl, $fromUsername, $toUsername, $time, $msgtype, $contentStr);
 				echo $resultStr;
 				exit();
@@ -78,6 +83,7 @@ class wechatCallbackapiTest{
 		}
 	}
 	
+ 	//验证字段
  	private function checkSignature(){
  
 		$signature = $_GET["signature"];
@@ -108,9 +114,9 @@ class wechatCallbackapiTest{
 	public function upLoadImage(){
 		$url = "https://api.weixin.qq.com/cgi-bin/media/upload?access_token=".$this->getAccessToken()."&type=image";
 		if (class_exists('\CURLFile')) {
-		$josn = array('media' => new \CURLFile(realpath("../api/QR.png")));
+		$josn = array('media' => new \CURLFile(realpath("../wechat/QR.png")));
 		} else {
-			$josn = array('media' => '@' . realpath("../api/QR.png"));
+			$josn = array('media' => '@' . realpath("../wechat/QR.png"));
 		}
 		$ret = $this->curlPost($url,$josn);
 		$row = json_decode($ret);//对JSON格式的字符串进行编码
@@ -127,8 +133,9 @@ class wechatCallbackapiTest{
         	curl_setopt($curl, CURLOPT_POSTFIELDS, $data);
     	}
 		curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
+		//执行curl，抓取URL并把它传递给浏览器
 		$output = curl_exec($curl);
-
+		//关闭cURL资源，并且释放系统资源
 		curl_close($curl);
 		return $output;
 	}
