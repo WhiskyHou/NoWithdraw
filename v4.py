@@ -18,14 +18,11 @@ def ClearTimeOutMsg():
         for msgid in list(msg_dict): #由于字典在遍历过程中不能删除元素，故使用此方法
             if time.time() - msg_dict.get(msgid, None)["msg_time"] > 130.0: #超时两分钟
                 item = msg_dict.pop(msgid)
-                #print("超时的消息：", item['msg_content'])
-                #可下载类消息，并删除相关文件
-                #if item['msg_type'] == "Attachment" \
-                #        or item['msg_type'] == "Recording" \
-                #        or item['msg_type'] == "Picture" \
-                #        or item['msg_type'] == "Video":
-                #    print("要删除的文件：", item['msg_content'])
-                #    os.remove(item['msg_content'])
+                if item['msg_type'] == "Attachment" \
+                        or item['msg_type'] == "Recording" \
+                        or item['msg_type'] == "Picture" \
+                        or item['msg_type'] == "Video":
+                    os.remove(item['msg_content'])
 
 # 将接收到的消息存放在字典中，当接收到新消息时对字典中超时的消息进行清理
 # 没有注册note（通知类）消息，通知类消息一般为：红包 转账 消息撤回提醒等，不具有撤回功能
